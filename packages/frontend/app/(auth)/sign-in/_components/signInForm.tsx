@@ -41,12 +41,6 @@ const SignInForm: React.FC = () => {
     },
   })
 
-  const eWatcher = form.watch('email')
-  const pwdWatcher = form.watch('email')
-
-  console.log('eWatcher: ', eWatcher)
-  console.log('pwdWatcher: ', pwdWatcher)
-
   const submitHandler = form.handleSubmit((data) => {
     console.log('SignInForm.data: ', data)
   })
