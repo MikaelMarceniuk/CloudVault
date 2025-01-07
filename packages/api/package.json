@@ -1,0 +1,22 @@
+{
+  "name": "@cloudvault/api",
+  "version": "1.0.0",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start:dev": "ts-node-dev --respawn --transpile-only src/index.ts"
+  },
+  "dependencies": {
+    "@fastify/autoload": "^6.0.3",
+    "@fastify/cors": "^10.0.2",
+    "@fastify/env": "^5.0.2",
+    "@fastify/swagger": "^9.4.0",
+    "fastify": "^5.2.1",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.7.2"
+  }
+}

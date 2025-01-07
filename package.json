@@ -1,0 +1,10 @@
+{
+  "name": "cloudvault",
+  "version": "1.0.0",
+  "description": "Uma aplicação web para gerenciar e armazenar arquivos multimídia (imagens, vídeos, documentos). A plataforma permite que os usuários façam upload, classifiquem, compartilhem e gerenciem arquivos de forma segura",
+  "repository": "git@github.com:MikaelMarceniuk/CloudVault.git",
+  "author": "Mikael Marceniuk <mika.marceniuk@gmail.com>",
+  "license": "MIT",
+  "private": true,
+	"workspaces": ["packages/**"]
+}
