@@ -2,6 +2,9 @@ import fastify, { FastifyInstance } from 'fastify'
 import cors from '@fastify/cors'
 import env from './utils/env'
 
+import loadPassportPlugin from './plugins/passport'
+import loadSecureSession from './plugins/secureSession'
+
 class Server {
   server: FastifyInstance
 
@@ -10,7 +13,7 @@ class Server {
       logger: true,
     })
 
-    this.startPlugins()
+    await this.startPlugins()
     this.startRoutes()
   }
 
@@ -24,10 +27,14 @@ class Server {
     }
   }
 
-  startPlugins(): void {
+  async startPlugins(): Promise<void> {
     this.server.register(cors, {
-      origin: '*',
+      origin: 'http://localhost:3000',
+      credentials: true,
     })
+
+    await loadSecureSession(this.server)
+    await loadPassportPlugin(this.server)
 
     this.server.setErrorHandler((error, _req, rep) => {
       this.server.log.error(error)
@@ -41,6 +48,18 @@ class Server {
         isSuccess: true,
         message: 'Hello World!',
       })
+    })
+
+    this.server.get('/user', (req, rep) => {
+      if (req.user) {
+        rep.send({
+          id: req.user.id,
+          username: req.user.username,
+        })
+        return
+      }
+
+      rep.send(null)
     })
   }
 }

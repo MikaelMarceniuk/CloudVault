@@ -5,6 +5,8 @@ config()
 
 const envSchema = z.object({
   PORT: z.coerce.number().min(1),
+  DISCORD_CLIENT_ID: z.string().min(1),
+  DISCORD_SECRET: z.string().min(1),
 })
 
 const envParsed = envSchema.safeParse(process.env)

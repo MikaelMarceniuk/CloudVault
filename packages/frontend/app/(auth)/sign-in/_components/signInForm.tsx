@@ -102,36 +102,42 @@ const SignInForm: React.FC = () => {
             <div className="flex justify-evenly">
               <Button
                 type="button"
-                onClick={() => console.log('SignIn with Google provider')}
+                asChild
               >
-                <Image
-                  src="/google-icon.svg"
-                  alt="Google Icon"
-                  width={16}
-                  height={16}
-                />
+                <Link href={'http://localhost:3333/auth/google/callback'}>
+                  <Image
+                    src="/google-icon.svg"
+                    alt="Google Icon"
+                    width={16}
+                    height={16}
+                  />
+                </Link>
               </Button>
               <Button
                 type="button"
-                onClick={() => console.log('SignIn with Github provider')}
+                asChild
               >
-                <Image
-                  src="/github-icon-white.svg"
-                  alt="Github Icon"
-                  width={16}
-                  height={16}
-                />
+                <Link href={'http://localhost:3333/auth/github/callback'}>
+                  <Image
+                    src="/github-icon-white.svg"
+                    alt="Github Icon"
+                    width={16}
+                    height={16}
+                  />
+                </Link>
               </Button>
               <Button
                 type="button"
-                onClick={() => console.log('SignIn with Discord provider')}
+                asChild
               >
-                <Image
-                  src="/discord-icon.svg"
-                  alt="Discord Icon"
-                  width={16}
-                  height={16}
-                />
+                <Link href={'http://localhost:3333/auth/discord/callback'}>
+                  <Image
+                    src="/discord-icon.svg"
+                    alt="Discord Icon"
+                    width={16}
+                    height={16}
+                  />
+                </Link>
               </Button>
             </div>
 
