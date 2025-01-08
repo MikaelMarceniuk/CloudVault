@@ -1,6 +1,8 @@
 import fastify, { FastifyInstance } from 'fastify'
 import cors from '@fastify/cors'
+
 import env from './utils/env'
+import { connectToDatabase } from './utils/db'
 
 import loadPassportPlugin from './plugins/passport'
 import loadSecureSession from './plugins/secureSession'
@@ -14,8 +16,9 @@ class Server {
       logger: true,
     })
 
+    await connectToDatabase()
     await this.startPlugins()
-    this.startRoutes()
+    await this.startRoutes()
   }
 
   public async listen(): Promise<void> {
@@ -50,18 +53,6 @@ class Server {
         isSuccess: true,
         message: 'Hello World!',
       })
-    })
-
-    this.server.get('/user', (req, rep) => {
-      if (req.user) {
-        rep.send({
-          id: req.user.id,
-          username: req.user.username,
-        })
-        return
-      }
-
-      rep.send(null)
     })
 
     this.server.post(
