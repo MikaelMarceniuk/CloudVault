@@ -1,14 +1,12 @@
 import { Button } from '@/components/ui/button'
-import { FolderPlus, Plus, Share, Upload } from 'lucide-react'
+import { FolderPlus, Plus, Share } from 'lucide-react'
+import SendOrDropFileBtn from './_components/sendOrDropFileBtn'
 
 const CoreHomePage: React.FC = () => {
   return (
     <div className="flex flex-1 flex-col gap-4 p-4">
       <div className="flex gap-4">
-        <Button className="h-20 w-40 flex flex-col items-start">
-          <Upload />
-          <span className="font-semibold">Send or Drop a file</span>
-        </Button>
+        <SendOrDropFileBtn />
         <Button
           className="h-20 w-40 flex flex-col items-start"
           variant={'secondary'}

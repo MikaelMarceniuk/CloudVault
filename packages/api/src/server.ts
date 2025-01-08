@@ -4,6 +4,7 @@ import env from './utils/env'
 
 import loadPassportPlugin from './plugins/passport'
 import loadSecureSession from './plugins/secureSession'
+import { loadMulter, multer } from './plugins/multer'
 
 class Server {
   server: FastifyInstance
@@ -35,9 +36,10 @@ class Server {
 
     await loadSecureSession(this.server)
     await loadPassportPlugin(this.server)
+    await loadMulter(this.server)
 
     this.server.setErrorHandler((error, _req, rep) => {
-      this.server.log.error(error)
+      console.log(error)
       rep.status(500).send({ error: 'Internal Server Error' })
     })
   }
@@ -61,6 +63,16 @@ class Server {
 
       rep.send(null)
     })
+
+    this.server.post(
+      '/upload',
+      { preHandler: multer.array('files') },
+      (req, rep) => {
+        rep.send({
+          isSuccess: true,
+        })
+      }
+    )
   }
 }
 
