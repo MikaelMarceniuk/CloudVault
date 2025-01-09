@@ -1,11 +1,13 @@
-import fs from 'fs/promises'
+import { File } from '@prisma/client'
 import { PutObjectCommand } from '@aws-sdk/client-s3'
 import {
   DeleteMessageCommand,
   ReceiveMessageCommand,
 } from '@aws-sdk/client-sqs'
+import fs from 'fs/promises'
 
 import IFileRepository from '../../repository/IFileRepository'
+
 import env from '../../utils/env'
 import s3Client from '../../utils/s3'
 import sqsClient from '../../utils/sqs'
@@ -20,13 +22,13 @@ type SQSMessage = {
   }
 }
 
-class createFileUseCase {
+class CreateFileUseCase {
   constructor(private fileRepo: IFileRepository) {}
 
   async execute(): Promise<void> {
     const params = {
       QueueUrl: env.SQS_URL,
-      MaxNumberOfMessages: 10,
+      MaxNumberOfMessages: 5,
       WaitTimeSeconds: 5,
     }
 
@@ -38,61 +40,106 @@ class createFileUseCase {
       if (!response.Messages) return
 
       for (const { ReceiptHandle, Body } of response.Messages) {
-        // TODO Refactor
         const { userId, file } = JSON.parse(Body!) as SQSMessage
 
-        const isRootFolder = file.parentfolder == '/'
-        const filename = isRootFolder
-          ? file.name
-          : `${file.parentfolder}/${file.name}`
-        const fileKey = `${userId}/${filename}`
+        const isRootFolder = file.parentfolder === '/'
+        const parentFolders = isRootFolder ? [] : file.parentfolder.split('/')
 
-        const putObjectCommand = new PutObjectCommand({
-          Bucket: env.S3_BUCKET,
-          Key: fileKey,
-          Body: await fs.readFile(file.path),
-          ContentType: file.mimetype,
-          ACL: 'public-read',
-        })
+        // Construa o caminho do arquivo completo no S3
+        const fileKey = `${userId}/${file.parentfolder}/${file.name}`
 
-        const { $metadata: s3Metadata } = await s3Client.send(putObjectCommand)
-        // TODO Handle s3 fail
-        if (s3Metadata.httpStatusCode != 200) return
+        // Envie o arquivo para o S3
+        await this.uploadFileToS3(fileKey, file)
 
-        // TODO Handle Db fail
-        const fileHierarq = filename.split('/')
-        for (const pathname of fileHierarq) {
-          const isFile =
-            fileHierarq.findIndex((p) => p == pathname) ==
-            fileHierarq.length - 1
-
-          await this.fileRepo.createFile({
-            name: pathname,
-            path: `https://${env.S3_BUCKET}.s3.us-east-2.amazonaws.com/${fileKey}`,
-            type: isFile ? 'FILE' : 'FOLDER',
-            userId,
-          })
-        }
-
-        await fs.unlink(file.path)
+        // Salve a hierarquia de diretórios e o arquivo no banco de dados
+        await this.saveHierarchyToDatabase(
+          userId,
+          parentFolders,
+          fileKey,
+          file.name
+        )
 
         // Exclua a mensagem da fila após o processamento
-        const deleteParams = {
-          QueueUrl: env.SQS_URL,
-          ReceiptHandle: ReceiptHandle,
-        }
-        const deleteCommand = new DeleteMessageCommand(deleteParams)
-        const { $metadata: delMetadata } = await sqsClient.send(deleteCommand)
-
-        // TODO Handle sqs fail
-        if (delMetadata.httpStatusCode != 200) return
+        await this.deleteMessageFromQueue(ReceiptHandle!)
       }
-    } catch (err: any) {
-      // TODO Handle DB Errors
-      console.log('Error in createFileUseCase: ', err)
+    } catch (err) {
+      console.error('Error in CreateFileUseCase:', err)
       throw err
+    }
+  }
+
+  private async uploadFileToS3(fileKey: string, file: SQSMessage['file']) {
+    const putObjectCommand = new PutObjectCommand({
+      Bucket: env.S3_BUCKET,
+      Key: fileKey,
+      Body: await fs.readFile(file.path),
+      ContentType: file.mimetype,
+      ACL: 'public-read',
+    })
+
+    const { $metadata: s3Metadata } = await s3Client.send(putObjectCommand)
+
+    if (s3Metadata.httpStatusCode !== 200) {
+      throw new Error('Failed to upload file to S3')
+    }
+  }
+
+  private async saveHierarchyToDatabase(
+    userId: string,
+    parentFolders: string[],
+    fileKey: string,
+    fileName: string
+  ) {
+    let lastInsertedFolder: File | null = null
+    const bucketUrl = `https://${env.S3_BUCKET}.s3.us-east-2.amazonaws.com`
+
+    for (const folder of parentFolders) {
+      const folderPath = `${bucketUrl}/${userId}/${parentFolders
+        .slice(0, parentFolders.indexOf(folder) + 1)
+        .join('/')}`
+
+      const existingFile = await this.fileRepo.findByPathAndUserId({
+        path: folderPath,
+        userId,
+      })
+
+      if (existingFile && existingFile?.length > 0) continue
+
+      const isThereParent =
+        lastInsertedFolder?.id && lastInsertedFolder?.type == 'FOLDER'
+
+      lastInsertedFolder = await this.fileRepo.createFile({
+        name: folder,
+        path: folderPath,
+        type: 'FOLDER',
+        parentId: isThereParent ? lastInsertedFolder?.id : undefined,
+        userId,
+      })
+    }
+
+    // Salve o arquivo no banco de dados
+    await this.fileRepo.createFile({
+      name: fileName,
+      path: `${bucketUrl}/${fileKey}`,
+      type: 'FILE',
+      parentId: lastInsertedFolder?.id || null,
+      userId,
+    })
+  }
+
+  private async deleteMessageFromQueue(receiptHandle: string) {
+    const deleteParams = {
+      QueueUrl: env.SQS_URL,
+      ReceiptHandle: receiptHandle,
+    }
+
+    const deleteCommand = new DeleteMessageCommand(deleteParams)
+    const { $metadata: delMetadata } = await sqsClient.send(deleteCommand)
+
+    if (delMetadata.httpStatusCode !== 200) {
+      throw new Error('Failed to delete message from SQS')
     }
   }
 }
 
-export default createFileUseCase
+export default CreateFileUseCase

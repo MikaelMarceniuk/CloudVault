@@ -9,11 +9,15 @@ const fileController = (server: FastifyInstance) => {
     '/api/file',
     { preHandler: multer.array('files') },
     async (req, rep) => {
+      const parentfolder = req.body.parentfolder
+
       // TODO Fix this warnings
       const caseResp = await new sendFileMessageUseCase().execute({
         userId: req.user.id,
         files: req.files,
-        parentfolder: [...req.body.parentfolder] as string[],
+        parentfolder: Array.isArray(parentfolder)
+          ? parentfolder
+          : [parentfolder],
       })
 
       rep.send(caseResp)
