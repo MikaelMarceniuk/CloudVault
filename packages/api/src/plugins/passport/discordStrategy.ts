@@ -5,7 +5,7 @@ import DiscordStrategy from 'passport-discord'
 import env from '../../utils/env'
 
 import createUserByProviderFactory from '../../useCases/factory/createUserByProvider'
-import findUserByProviderIdFactory from '../../useCases/factory/findUserByProvider'
+import findUserByIdFactory from '../../useCases/factory/findUserByIdFactory'
 
 const loadDiscordStrategy = (server: FastifyInstance) => {
   fastifyPassport.use(
@@ -18,7 +18,7 @@ const loadDiscordStrategy = (server: FastifyInstance) => {
         scope: ['identify', 'email'],
       },
       async (_acessToken, _refreshToken, profile, cb) => {
-        const { user: dbUser } = await findUserByProviderIdFactory().execute({
+        const { user: dbUser } = await findUserByIdFactory().execute({
           userId: profile.id,
         })
         if (dbUser) {

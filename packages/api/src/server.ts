@@ -6,17 +6,18 @@ import { connectToDatabase } from './utils/db'
 
 import loadPassportPlugin from './plugins/passport'
 import loadSecureSession from './plugins/secureSession'
-import { loadMulter, multer } from './plugins/multer'
+import { loadMulter } from './plugins/multer'
 
 import authController from './http/controllers/authController'
 import userController from './http/controllers/userController'
+import fileController from './http/controllers/fileController'
 
 class Server {
   server: FastifyInstance
 
   public async init(): Promise<void> {
     this.server = fastify({
-      // logger: true,
+      logger: true,
     })
 
     await connectToDatabase()
@@ -60,16 +61,7 @@ class Server {
 
     await authController(this.server)
     await userController(this.server)
-
-    this.server.post(
-      '/upload',
-      { preHandler: multer.array('files') },
-      (req, rep) => {
-        rep.send({
-          isSuccess: true,
-        })
-      }
-    )
+    await fileController(this.server)
   }
 }
 

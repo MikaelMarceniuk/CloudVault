@@ -24,6 +24,32 @@ model User {
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+  File      File[]
 
   @@map("user")
+}
+
+model File {
+  id        String   @id @default(cuid())
+  name      String
+  type      FileType
+  path      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  parentId String? @map("parent_id")
+  userId   String  @map("user_id")
+
+  // Relações
+  parent   File?  @relation("folder_contents", fields: [parentId], references: [id])
+  contents File[] @relation("folder_contents")
+  user     User   @relation(fields: [userId], references: [id])
+
+  @@index([userId, path], name: "user_path_unique") // Garante que cada usuário tenha caminhos únicos
+  @@map("file")
+}
+
+enum FileType {
+  FILE
+  FOLDER
 }

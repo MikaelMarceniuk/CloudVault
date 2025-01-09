@@ -35,7 +35,7 @@ const SendOrDropFileBtn: React.FC = () => {
         body.append('files', f)
       }
 
-      await axios.post('http://localhost:3333/upload', body, {
+      await axios.post('http://localhost:3333/api/file', body, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
