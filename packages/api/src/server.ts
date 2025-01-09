@@ -8,12 +8,15 @@ import loadPassportPlugin from './plugins/passport'
 import loadSecureSession from './plugins/secureSession'
 import { loadMulter, multer } from './plugins/multer'
 
+import authController from './http/controllers/authController'
+import userController from './http/controllers/userController'
+
 class Server {
   server: FastifyInstance
 
   public async init(): Promise<void> {
     this.server = fastify({
-      logger: true,
+      // logger: true,
     })
 
     await connectToDatabase()
@@ -47,13 +50,16 @@ class Server {
     })
   }
 
-  startRoutes(): void {
+  async startRoutes(): Promise<void> {
     this.server.get('/api', (_req, rep) => {
       rep.send({
         isSuccess: true,
         message: 'Hello World!',
       })
     })
+
+    await authController(this.server)
+    await userController(this.server)
 
     this.server.post(
       '/upload',
