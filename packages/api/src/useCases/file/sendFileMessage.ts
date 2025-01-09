@@ -8,6 +8,7 @@ import sqsClient from '../../utils/sqs'
 
 const sendFileMessageUseCaseParams = z.object({
   userId: z.string(),
+  parentfolder: z.array(z.string()),
   files: z.array(
     z.object({
       fieldname: z.string(),
@@ -40,7 +41,9 @@ type SendFileMessageUseCaseResponse =
 class sendFileMessageUseCase {
   constructor() {}
 
-  async execute(params: sendFileMessageUseCaseParams): Promise<void> {
+  async execute(
+    params: sendFileMessageUseCaseParams
+  ): Promise<SendFileMessageUseCaseResponse> {
     const safeParams = sendFileMessageUseCaseParams.safeParse(params)
 
     if (!safeParams.success) {
@@ -54,15 +57,19 @@ class sendFileMessageUseCase {
     try {
       const { data } = safeParams
 
-      for (const f of data.files) {
+      for (let i = 0; i < data.files.length; i++) {
+        const file = data.files[i]
+        const parentfolder = data.parentfolder[i]
+
         const params = {
           QueueUrl: env.SQS_URL,
           MessageBody: JSON.stringify({
             userId: data.userId,
             file: {
-              name: f.filename,
-              mimetype: f.mimetype,
-              path: f.path,
+              name: file.originalname,
+              mimetype: file.mimetype,
+              path: file.path,
+              parentfolder,
             },
           }),
         }
@@ -71,8 +78,16 @@ class sendFileMessageUseCase {
         await sqsClient.send(command)
         // TODO Handle if response isnt 200
       }
-    } catch (err) {
+
+      return {
+        isSuccess: true,
+      }
+    } catch (err: any) {
       console.error('Error sending message to queue:', err)
+      return {
+        isSuccess: false,
+        error: err.message || 'Unexpected error',
+      }
     }
   }
 }

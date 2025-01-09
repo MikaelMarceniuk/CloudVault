@@ -28,11 +28,20 @@ const SendOrDropFileBtn: React.FC = () => {
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    if (event.target.files && event.target.files.length > 0) {
+    const input = event.target
+
+    if (input.files && input.files.length > 0) {
       const body = new FormData()
 
-      for (const f of event.target.files) {
+      for (const f of input.files) {
         body.append('files', f)
+
+        if (f.webkitRelativePath) {
+          const parentfolder = f.webkitRelativePath.split('/')
+          parentfolder.pop()
+
+          body.append('parentfolder', parentfolder.join('/'))
+        } else body.append('parentfolder', '/')
       }
 
       await axios.post('http://localhost:3333/api/file', body, {
@@ -42,6 +51,8 @@ const SendOrDropFileBtn: React.FC = () => {
         withCredentials: true,
       })
     }
+
+    input.value = ''
   }
 
   return (

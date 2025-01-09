@@ -10,6 +10,16 @@ import env from '../../utils/env'
 import s3Client from '../../utils/s3'
 import sqsClient from '../../utils/sqs'
 
+type SQSMessage = {
+  userId: string
+  file: {
+    name: string
+    mimetype: string
+    path: string
+    parentfolder: string
+  }
+}
+
 class createFileUseCase {
   constructor(private fileRepo: IFileRepository) {}
 
@@ -28,11 +38,18 @@ class createFileUseCase {
       if (!response.Messages) return
 
       for (const { ReceiptHandle, Body } of response.Messages) {
-        const { userId, file } = JSON.parse(Body!)
+        // TODO Refactor
+        const { userId, file } = JSON.parse(Body!) as SQSMessage
+
+        const isRootFolder = file.parentfolder == '/'
+        const filename = isRootFolder
+          ? file.name
+          : `${file.parentfolder}/${file.name}`
+        const fileKey = `${userId}/${filename}`
 
         const putObjectCommand = new PutObjectCommand({
           Bucket: env.S3_BUCKET,
-          Key: file.name,
+          Key: fileKey,
           Body: await fs.readFile(file.path),
           ContentType: file.mimetype,
           ACL: 'public-read',
@@ -43,12 +60,19 @@ class createFileUseCase {
         if (s3Metadata.httpStatusCode != 200) return
 
         // TODO Handle Db fail
-        await this.fileRepo.createFile({
-          name: file.name,
-          path: `https://${env.S3_BUCKET}.s3.us-east-2.amazonaws.com/${file.name}`,
-          type: 'FILE',
-          userId,
-        })
+        const fileHierarq = filename.split('/')
+        for (const pathname of fileHierarq) {
+          const isFile =
+            fileHierarq.findIndex((p) => p == pathname) ==
+            fileHierarq.length - 1
+
+          await this.fileRepo.createFile({
+            name: pathname,
+            path: `https://${env.S3_BUCKET}.s3.us-east-2.amazonaws.com/${fileKey}`,
+            type: isFile ? 'FILE' : 'FOLDER',
+            userId,
+          })
+        }
 
         await fs.unlink(file.path)
 

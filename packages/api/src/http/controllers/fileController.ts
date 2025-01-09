@@ -1,7 +1,6 @@
 import { FastifyInstance } from 'fastify'
 import { multer } from '../../plugins/multer'
-import PrismaFileRepo from '../../repository/prisma/fileRepo'
-import createFileUseCase from '../../useCases/file/createFile'
+
 import sendFileMessageUseCase from '../../useCases/file/sendFileMessage'
 import createFileFactory from '../../useCases/factory/createFile'
 
@@ -11,14 +10,13 @@ const fileController = (server: FastifyInstance) => {
     { preHandler: multer.array('files') },
     async (req, rep) => {
       // TODO Fix this warnings
-      await new sendFileMessageUseCase().execute({
+      const caseResp = await new sendFileMessageUseCase().execute({
         userId: req.user.id,
         files: req.files,
+        parentfolder: [...req.body.parentfolder] as string[],
       })
 
-      rep.send({
-        isSuccess: true,
-      })
+      rep.send(caseResp)
     }
   )
 
