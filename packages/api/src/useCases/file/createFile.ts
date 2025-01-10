@@ -61,6 +61,9 @@ class CreateFileUseCase {
 
         // Exclua a mensagem da fila após o processamento
         await this.deleteMessageFromQueue(ReceiptHandle!)
+
+        // Exclua o arquivo no localhost
+        await fs.unlink(file.path)
       }
     } catch (err) {
       console.error('Error in CreateFileUseCase:', err)
@@ -90,12 +93,12 @@ class CreateFileUseCase {
     fileKey: string,
     fileName: string
   ) {
-    let lastInsertedFolder: File | null = null
     const bucketUrl = `https://${env.S3_BUCKET}.s3.us-east-2.amazonaws.com`
 
     for (const folder of parentFolders) {
+      const currentFolderIndex = parentFolders.indexOf(folder)
       const folderPath = `${bucketUrl}/${userId}/${parentFolders
-        .slice(0, parentFolders.indexOf(folder) + 1)
+        .slice(0, currentFolderIndex + 1)
         .join('/')}`
 
       const existingFile = await this.fileRepo.findByPathAndUserId({
@@ -105,24 +108,31 @@ class CreateFileUseCase {
 
       if (existingFile && existingFile?.length > 0) continue
 
-      const isThereParent =
-        lastInsertedFolder?.id && lastInsertedFolder?.type == 'FOLDER'
+      const [parentFolder] = await this.fileRepo.findByNameAndUserId({
+        name: parentFolders[currentFolderIndex - 1] || '',
+        userId,
+      })
 
-      lastInsertedFolder = await this.fileRepo.createFile({
+      await this.fileRepo.createFile({
         name: folder,
         path: folderPath,
         type: 'FOLDER',
-        parentId: isThereParent ? lastInsertedFolder?.id : undefined,
+        parentId: parentFolder?.id || undefined,
         userId,
       })
     }
+
+    const [parentFolder] = await this.fileRepo.findByNameAndUserId({
+      name: parentFolders.pop() || '',
+      userId,
+    })
 
     // Salve o arquivo no banco de dados
     await this.fileRepo.createFile({
       name: fileName,
       path: `${bucketUrl}/${fileKey}`,
       type: 'FILE',
-      parentId: lastInsertedFolder?.id || null,
+      parentId: parentFolder.id || null,
       userId,
     })
   }
