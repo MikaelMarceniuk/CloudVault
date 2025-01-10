@@ -3,6 +3,16 @@ import IFileRepository, { IFindByPathAndUserId } from '../IFileRepository'
 import { db } from '../../utils/db'
 
 class PrismaFileRepo implements IFileRepository {
+  async findByUserId(userId: string): Promise<File[]> {
+    return await db.file.findMany({
+      where: {
+        userId: {
+          equals: userId,
+        },
+      },
+    })
+  }
+
   async findByPathAndUserId({
     path,
     userId,

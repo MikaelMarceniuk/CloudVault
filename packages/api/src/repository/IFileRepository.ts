@@ -6,6 +6,7 @@ export type IFindByPathAndUserId = {
 }
 
 interface IFileRepository {
+  findByUserId(userId: string): Promise<File[]>
   findByPathAndUserId(params: IFindByPathAndUserId): Promise<File[] | null>
   createFile(file: Prisma.FileUncheckedCreateInput): Promise<File>
 }

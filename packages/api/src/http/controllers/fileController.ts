@@ -3,8 +3,22 @@ import { multer } from '../../plugins/multer'
 
 import sendFileMessageUseCase from '../../useCases/file/sendFileMessage'
 import createFileFactory from '../../useCases/factory/createFile'
+import getUserFilesFactory from '../../useCases/factory/getUserFiles'
 
 const fileController = (server: FastifyInstance) => {
+  server.get('/api/file', async (req, rep) => {
+    const files = await getUserFilesFactory().execute({
+      // TODO Handle this error
+      userId: req.user.id,
+      path: req.query.path,
+    })
+
+    return {
+      isSuccess: true,
+      data: files,
+    }
+  })
+
   server.post(
     '/api/file',
     { preHandler: multer.array('files') },
