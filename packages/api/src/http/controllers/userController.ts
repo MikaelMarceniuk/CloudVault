@@ -1,8 +1,7 @@
-import { User } from '@prisma/client'
 import { FastifyInstance } from 'fastify'
 
 const userController = (server: FastifyInstance) => {
-  server.get('/user', async (req, rep) => {
+  server.get('/api/user', async (req, rep) => {
     if (req.user) {
       // TODO Type PassportUser
       rep.status(200).send({

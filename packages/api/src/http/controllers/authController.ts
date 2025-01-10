@@ -12,7 +12,7 @@ const authController = (server: FastifyInstance) => {
     }
   )
 
-  server.get('/logout', (req, rep) => {
+  server.get('/api/logout', (req, rep) => {
     req.logout()
     rep.send({
       isSuccess: true,
