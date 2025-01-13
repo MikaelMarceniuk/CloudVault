@@ -1,3 +1,4 @@
+import File from '@/@types/File'
 import axios from 'axios'
 
 type GetUserFilesApiParams = {
@@ -9,17 +10,6 @@ type ApiResponse = {
   data: {
     files: File[]
   }
-}
-
-type File = {
-  name: string
-  id: string
-  type: 'FOLDER' | 'FILE'
-  path: string
-  createdAt: Date
-  updatedAt: Date
-  parentId: string | null
-  userId: string
 }
 
 const getUserFilesApi = async ({

@@ -8,6 +8,8 @@ import getUserFilesApi from '@/api/getUserFiles'
 import { useSession } from '@/providers/sessionProvider'
 import { Folder } from 'lucide-react'
 import Link from 'next/link'
+import FileItem from './fileItem'
+import FolderItem from './folderItem'
 
 const FileExplorer: React.FC = () => {
   const { user } = useSession()
@@ -30,17 +32,10 @@ const FileExplorer: React.FC = () => {
           <span className="text-sm font-semibold">Folders</span>
           <ul className="flex flex-wrap gap-4">
             {folders?.map((f) => (
-              <Link
-                href={`${pathname}/${f.name}`}
+              <FolderItem
                 key={f.id}
-              >
-                <li className="border rounded-lg p-4 flex gap-4 w-fit bg-primary cursor-pointer hover:bg-primary/80 active:bg-primary">
-                  <Folder className="stroke-primary-foreground" />
-                  <span className="font-semibold text-primary-foreground">
-                    {f.name}
-                  </span>
-                </li>
-              </Link>
+                file={f}
+              />
             ))}
           </ul>
         </div>
@@ -51,17 +46,10 @@ const FileExplorer: React.FC = () => {
           <span className="text-sm font-semibold">Files</span>
           <ul className="flex flex-wrap gap-4">
             {files?.map((f) => (
-              <Link
-                href={`${pathname}/${f.name}`}
+              <FileItem
                 key={f.id}
-              >
-                <li className="border rounded-lg p-4 flex gap-4 w-fit bg-primary cursor-pointer hover:bg-primary/80 active:bg-primary">
-                  <Folder className="stroke-primary-foreground" />
-                  <span className="font-semibold text-primary-foreground">
-                    {f.name}
-                  </span>
-                </li>
-              </Link>
+                file={f}
+              />
             ))}
           </ul>
         </div>
