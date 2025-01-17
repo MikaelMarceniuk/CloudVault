@@ -6,10 +6,9 @@ import useSWR from 'swr'
 import getUserFilesApi from '@/api/getUserFiles'
 
 import { useSession } from '@/providers/sessionProvider'
-import { Folder } from 'lucide-react'
-import Link from 'next/link'
 import FileItem from './fileItem'
 import FolderItem from './folderItem'
+import FileExplorerBreadcrumb from './breadcrumb'
 
 const FileExplorer: React.FC = () => {
   const { user } = useSession()
@@ -27,6 +26,8 @@ const FileExplorer: React.FC = () => {
 
   return (
     <div className="min-h-[100vh] flex-1 rounded-xl bg-muted/50 md:min-h-min">
+      <FileExplorerBreadcrumb />
+
       {folders.length > 0 && (
         <div className="p-4 space-y-4">
           <span className="text-sm font-semibold">Folders</span>
